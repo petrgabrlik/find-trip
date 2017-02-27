@@ -45,7 +45,6 @@ def create_airport_dict():
 def main(in_path):
     iata_country = create_airport_dict()
 
-    # path = 'input_data.csv'
     unknown_iata = set()
     with open(in_path, encoding="utf-8") as fp:
         reader = csv.reader(fp, delimiter=';', skipinitialspace=True)
