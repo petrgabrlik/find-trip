@@ -36,6 +36,7 @@ def create_airport_dict():
     with open(path, encoding="utf-8") as fp:
         reader = csv.reader(fp, delimiter=',', quotechar='"',
                             skipinitialspace=True)
+        next(reader, None) # skip header
         for line in reader:
             iata_country[line[13]] = line[8]
 
