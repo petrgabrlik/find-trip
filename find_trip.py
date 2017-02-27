@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 '''
 Trip finder
 
@@ -7,7 +9,9 @@ TODO:
 - nastudovat spravne predavani argumentu z command line
 '''
 
-# __author__
+__author__ = "Petr Gabrlik"
+__email__ = "petrgabrlik@email.cz"
+__license__ = "MIT"
 
 import sys
 import csv
