@@ -101,37 +101,44 @@ def main(in_path):
     # Hledani destinaci z daneho mista, serazeno
     print(df[df['src']=='AHB'].sort_values(by='deptime'))
 
-    r = 651
+    r = 0
+    counter = 0
     countries = []
-    while len(countries) < 11:
+    while r < len(df):
         countries.clear()
-        stop = df.iloc[r].copy()
-        # countries.add(stop['srccountry'])
-        countries.append(stop['srccountry'])
-        print(r)
-        for i in range(10):
-            countries.append(stop['destcountry'])
-            if stop['destcountry'] == stop['srccountry']:
-                break
-            # print(stop)
-            # print(countries)
-            # stop = df[ (df['src'] == stop['dest']) & (df['deptime'] > stop['arrtime']) ].sort_values(by='deptime').iloc[0].copy()
-            if len(countries) < 10:
-                try:
-                    stop = df[ (df['src'] == stop['dest']) & (df['deptime'] > stop['arrtime']) & (~df['destcountry'].isin(countries)) ].sort_values(by='deptime').iloc[0].copy()
-                    # print(stop)
-                    # udelat dataframe z nalezenych letu
-                except:
-                    # print("\nDalsi destinace nenalezena.")
+        while len(countries) < 11:
+            countries.clear()
+            stop = df.iloc[r].copy()
+            # countries.add(stop['srccountry'])
+            countries.append(stop['srccountry'])
+            print(r, counter)
+            for i in range(10):
+                countries.append(stop['destcountry'])
+                if stop['destcountry'] == stop['srccountry']:
+                    # counter += 1
                     break
-            else:
-                try:
-                    stop = df[ (df['src'] == stop['dest']) & (df['deptime'] > stop['arrtime']) & (df['destcountry'] == countries[0]) ].sort_values(by='deptime').iloc[0].copy()
-                    # print(stop)
-                except:
-                    break
-        r += 1
-    print(countries)
+                # print(stop)
+                # print(countries)
+                # stop = df[ (df['src'] == stop['dest']) & (df['deptime'] > stop['arrtime']) ].sort_values(by='deptime').iloc[0].copy()
+                if len(countries) < 10:
+                    try:
+                        stop = df[ (df['src'] == stop['dest']) & (df['deptime'] > stop['arrtime']) & (~df['destcountry'].isin(countries)) ].sort_values(by='deptime').iloc[0].copy()
+                        # print(stop)
+                        # udelat dataframe z nalezenych letu
+                    except:
+                        # print("\nDalsi destinace nenalezena.")
+                        break
+                else:
+                    try:
+                        stop = df[ (df['src'] == stop['dest']) & (df['deptime'] > stop['arrtime']) & (df['destcountry'] == countries[0]) ].sort_values(by='deptime').iloc[0].copy()
+                        # print(jo)
+                    except:
+                        break
+            r += 1
+        print(countries)
+        counter += 1
+
+    print(counter)
 
     # join_df(in_path)
 
