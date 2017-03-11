@@ -19,8 +19,9 @@ import pandas as pd
 import numpy as np
 import time
 
-FLIGHTS_PER_TRIP = 5
+FLIGHTS_PER_TRIP = 9
 NUMBER_OF_TRIPS = 100
+DEBUG = True
 
 def create_airport_dict():
     '''
@@ -199,8 +200,9 @@ def main(in_path):
 
     # print(df[:10])
 
-    starttime = time.time()
-    # print('Started at', starttime)
+    if DEBUG:
+        starttime = time.time()
+        # print('>>>', 'Started at', starttime)
 
     trips = []
     countries_visited = []
@@ -234,15 +236,16 @@ def main(in_path):
         if find(df, flight, countries_visited, trips, flights_of_trip_ind) == 0:
             break
 
-
-    stoptime = time.time()
-    print('Search finished in ', stoptime - starttime)
+    if DEBUG:
+        stoptime = time.time()
+        print('>>>', 'Search finished in', stoptime - starttime)
 
     # for trip in trips:
     #     print(trip)
     # print(trips)
 
-    print(len(trips), 'nalezenych tripu')
+    if DEBUG:
+        print('>>>', len(trips), 'trips found')
         # print('Posledni je:')
         # for i in range(len(trips[-1])):
         #     print(df.loc[trips[-1][i]])
