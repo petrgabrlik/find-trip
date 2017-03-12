@@ -1,57 +1,30 @@
 #!/usr/bin/env python
 
 '''
-Trip finder
+Solution for Kiwi python weekend entry task.
 
-TODO:
-- OK ke kodu letiste zjistit zemi
-- vytvorit tridu pro kazdy trip?
-- nastudovat spravne predavani argumentu z command line
+More info:
+https://gist.github.com/MichalCab/2176c0eb2d996d906eea38e9ec9835d2
 '''
 
 __author__ = "Petr Gabrlik"
 __email__ = "petrgabrlik@email.cz"
-__license__ = "MIT"
 
 import sys
 import csv
 import pandas as pd
-import numpy as np
+import time
 
-CHANGE_MIN_TIME = 1
-FLIGHTS_PER_TRIP = 10
-COUNTRIES_PER_TRIP = FLIGHTS_PER_TRIP
-
-def join_df(in_path):
-    iata_country = create_airport_dict()
-    df = pd.read_csv(in_path, sep=';', names=['src', 'dest', 'deptime', 'arrtime'], skiprows=1, parse_dates=True)
-    # print(dff[dff['src']=='PRG'])
-    # print(dff[:10])
-    # print(dff['src'].values)
-    # print(dff[])
-    # dfa = pd.read_csv('airports.csv', sep=',')
-    # print(dfa[(dfa['iso_country']=='SK') & (dfa['iata_code'].isnull()==False)][['iso_country', 'iata_code']])
-    # print(dfa[dfa['iata_code'].isin(['PRG', 'BTS'])]['iso_country'])
-    # print(dfa[dfa['iata_code']=='PRG']['iso_country'].item())
-    # print( dfa[dfa['iata_code'].isin(dff['src'].values)][['iso_country','iata_code']] )
-
-    # df = dff.copy()
-    # print(iata_country[df['src']])
-    # print(df['src'])
-    # df['c'] = df.apply(lambda x: max(len(x['a']), len(x['b'])), axis=1)
-    # df['srccountry'] = df.apply(lambda x: dfa[dfa['iata_code']=='PRG']['iso_country'].item() , axis=1)
-    # df['srccountry'] = df.apply(lambda x: x['src'] , axis=1)
-    # df['srccountry'] = df.apply(lambda x: 'PRG' , axis=1)
-    df['srccountry'] = df.apply(lambda x: iata_country.get(x['src'], 'unknown'), axis=1)
-    df['destcountry'] = df.apply(lambda x: iata_country.get(x['dest'], 'unknown'), axis=1)
-    print(df[(df['srccountry']=='CZ') & (df['destcountry']=='SK')].sort_values(by='deptime'))
+FLIGHTS_PER_TRIP = 4
+NUMBER_OF_TRIPS = 100
+DEBUG = True
 
 def create_airport_dict():
     '''
     Create dictionary of airports and their countries.
 
-    This function creates a dictionary containing codes of
-    airports (IATA) and codes of countries (ISO 3166-1 alpha-2) in
+    This function creates and returns a dictionary containing codes
+    of airports (IATA) and codes of countries (ISO 3166-1 alpha-2) in
     the following format: key: value = iata_airport: iso_country.
 
     The data is obtained form *.csv file containing airport
@@ -68,79 +41,151 @@ def create_airport_dict():
 
     return iata_country
 
+
+def print_trip(df, trips):
+    '''
+    Print the trip in the desired format.
+
+    df - dataframe containing all flights
+    trips - list of the trips containing indexes of flights
+
+    Format:
+    <trip_id>;<country_code>;<source>;<destination>;
+        <local_departure_time>;<local_arrival_time>
+
+    Example:
+    1;CZ;PRG;BRU;2017-03-04T13:15;2017-03-04T15:15
+    1;AA;BRU;LON;2017-04-04T13:15;2017-04-04T15:15
+    1;BB;LON;VIE;2017-05-04T13:15;2017-05-04T15:15
+    1;CC;VIE;AAA;2017-06-04T13:15;2017-06-04T15:15
+    1;DD;AAA;HHH;2017-07-04T13:15;2017-07-04T15:15
+    1;EE;HHH;KKK;2017-08-04T13:15;2017-08-04T15:15
+    1;FF;KKK;LLL;2017-09-04T13:15;2017-09-04T15:15
+    1;GG;LLL;GGG;2017-10-04T13:15;2017-10-04T15:15
+    1;HH;GGG;UUU;2017-11-04T13:15;2017-11-04T15:15
+    1;II;UUU;PRG;2017-12-04T13:15;2017-12-04T15:15
+    '''
+    trip = trips[-1]
+    for flight_idx in trip:
+        print(  len(trips),
+                df.loc[flight_idx]['srccountry'],
+                df.loc[flight_idx]['src'],
+                df.loc[flight_idx]['dest'],
+                df.loc[flight_idx]['deptime'].strftime('%Y-%m-%dT%H:%M'),
+                df.loc[flight_idx]['arrtime'].strftime('%Y-%m-%dT%H:%M'),
+                sep=';')
+
+
+def find(df, current_flight, countries_visited, trips, flights_of_trip_ind):
+    '''
+    Find the next flight of the trip which meets the requirements.
+
+    df - dataframe containing all flights
+    current_flight - the last flight
+    countries_visited - the list of the visited countries
+    trips - the list of trips. Each trip contains indexes of the flights
+    flights_of_trip_ind - the list of indexes of flights (current trip)
+    '''
+    countries_visited.append(current_flight['destcountry'])
+    flights_of_trip_ind.append(current_flight.name)
+
+    if DEBUG:
+        print('>>>', len(trips), flights_of_trip_ind)
+
+    # Find next flight
+    if len(flights_of_trip_ind) < FLIGHTS_PER_TRIP-1:
+        potentional_dests = df[ (current_flight['dest'] == df['src']) &
+                                (current_flight['arrtime'] < df['deptime']) &
+                                (~df['destcountry'].isin(countries_visited)) &
+                                ( ( pd.to_datetime(df['arrtime']) - pd.to_datetime(df.loc[flights_of_trip_ind[0]]['deptime']) ) < pd.to_timedelta('365 days') )
+                                ]
+        if len(potentional_dests) > 0:
+            for index, flight in potentional_dests.iterrows():
+                # Call the recursive find function
+                if find(df, flight, countries_visited, trips,
+                        flights_of_trip_ind) == 0:
+                    return 0
+            countries_visited.pop()
+            flights_of_trip_ind.pop()
+            return 1
+        else:
+            countries_visited.pop()
+            flights_of_trip_ind.pop()
+            return -1
+
+    # Find the last flight to the initial destination
+    elif len(flights_of_trip_ind) == FLIGHTS_PER_TRIP-1:
+        potentional_dests = df[ (current_flight['dest'] == df['src']) &
+                                (current_flight['arrtime'] < df['deptime']) &
+                                (df['dest'] == df.loc[flights_of_trip_ind[0]]['src']) &
+                                ( ( pd.to_datetime(df['arrtime']) - pd.to_datetime(df.loc[flights_of_trip_ind[0]]['deptime']) ) < pd.to_timedelta('365 days') )
+                                ]
+        if len(potentional_dests) > 0:
+            for index, flight in potentional_dests.iterrows():
+                # Call the recursive find function
+                if find(df, flight, countries_visited, trips,
+                        flights_of_trip_ind) == 0:
+                    return 0
+            countries_visited.pop()
+            flights_of_trip_ind.pop()
+            return 1
+        else:
+            countries_visited.pop()
+            flights_of_trip_ind.pop()
+            return -1
+
+    # Trip found! Save it and pop the last flight
+    elif len(flights_of_trip_ind) == FLIGHTS_PER_TRIP:
+        trips.append(flights_of_trip_ind[:])
+        print_trip(df, trips)
+        if len(trips) == NUMBER_OF_TRIPS:
+            return 0
+        countries_visited.pop()
+        flights_of_trip_ind.pop()
+
+
 def main(in_path):
+    '''
+    The main function of the script.
+    '''
     # Create airport: country dict
     iata_country = create_airport_dict()
 
-    # DEBUG Find unknown iata codes in airport dictionary
-    # unknown_iata = set()
-    # with open(in_path, encoding="utf-8") as fp:
-    #     reader = csv.reader(fp, delimiter=';', skipinitialspace=True)
-    #     next(reader, None) # skip header
-    #     for line in reader:
-    #         if len(line) == 4:
-    #             try:
-    #                 print(line, iata_country[line[0]])
-    #             except:
-    #                 unknown_iata.add(line[0])
-    # print(unknown_iata)
-
     # Create input data dataframe
-    df = pd.read_csv(in_path, sep=';', names=['src', 'dest', 'deptime', 'arrtime'], skiprows=1, parse_dates=True)
-    # Add country columns to the dataframe
-    df['srccountry'] = df.apply(lambda x: iata_country.get(x['src'], 'unknown'), axis=1)
-    df['destcountry'] = df.apply(lambda x: iata_country.get(x['dest'], 'unknown'), axis=1)
+    df = pd.read_csv(in_path, sep=';',
+                    names=['src', 'dest', 'deptime', 'arrtime'],
+                    skiprows=1, parse_dates=[2, 3])
 
-    # print(df[(df['srccountry']=='CZ') & (df['destcountry']=='SK')].sort_values(by='deptime'))
+    # Add source and destination country columns to the dataframe
+    df['srccountry'] = df.apply(lambda x:
+                                iata_country.get(x['src'], 'unknown'), axis=1)
+    df['destcountry'] = df.apply(lambda x:
+                                iata_country.get(x['dest'], 'unknown'), axis=1)
 
-    # stop = df.iloc[0]
-    # print(stop)
-    # print(df[ (df['src'] == df.iloc[0]['dest']) & (df['deptime'] > df.iloc[0]['arrtime']) ].sort_values(by='deptime')[:5])
-    # print(df[ (df['src'] == stop['dest']) & (df['deptime'] > stop['arrtime']) ].sort_values(by='deptime').iloc[0])
+    # Delete domestic flights
+    df = df[df['srccountry'] != df['destcountry']]
 
-    # Hledani destinaci z daneho mista, serazeno
-    print(df[df['src']=='AHB'].sort_values(by='deptime'))
+    # Sort by time
+    df.sort_values(by='deptime', ascending=True, inplace=True)
 
-    r = 0
-    counter = 0
-    countries = []
-    while r < len(df):
-        countries.clear()
-        while len(countries) < 11:
-            countries.clear()
-            stop = df.iloc[r].copy()
-            # countries.add(stop['srccountry'])
-            countries.append(stop['srccountry'])
-            print(r, counter)
-            for i in range(10):
-                countries.append(stop['destcountry'])
-                if stop['destcountry'] == stop['srccountry']:
-                    # counter += 1
-                    break
-                # print(stop)
-                # print(countries)
-                # stop = df[ (df['src'] == stop['dest']) & (df['deptime'] > stop['arrtime']) ].sort_values(by='deptime').iloc[0].copy()
-                if len(countries) < 10:
-                    try:
-                        stop = df[ (df['src'] == stop['dest']) & (df['deptime'] > stop['arrtime']) & (~df['destcountry'].isin(countries)) ].sort_values(by='deptime').iloc[0].copy()
-                        # print(stop)
-                        # udelat dataframe z nalezenych letu
-                    except:
-                        # print("\nDalsi destinace nenalezena.")
-                        break
-                else:
-                    try:
-                        stop = df[ (df['src'] == stop['dest']) & (df['deptime'] > stop['arrtime']) & (df['destcountry'] == countries[0]) ].sort_values(by='deptime').iloc[0].copy()
-                        # print(jo)
-                    except:
-                        break
-            r += 1
-        print(countries)
-        counter += 1
+    if DEBUG:
+        starttime = time.time()
 
-    print(counter)
+    trips = []
+    countries_visited = []
+    flights_of_trip_ind = []
+    # Call find function
+    for index, flight in df.iterrows():
+        countries_visited.clear()
+        countries_visited.append(flight.srccountry)
+        if find(df, flight, countries_visited, trips, flights_of_trip_ind) == 0:
+            break
 
-    # join_df(in_path)
+    if DEBUG:
+        stoptime = time.time()
+        print('>>>', 'Search finished in', stoptime - starttime)
+        print('>>>', len(trips), 'trips found')
+
 
 if __name__ == '__main__':
     main(sys.argv[1])
