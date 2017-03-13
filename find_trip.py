@@ -15,9 +15,9 @@ import csv
 import pandas as pd
 import time
 
-FLIGHTS_PER_TRIP = 4
+FLIGHTS_PER_TRIP = 10
 NUMBER_OF_TRIPS = 100
-DEBUG = True
+DEBUG = False
 
 def create_airport_dict():
     '''
