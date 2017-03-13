@@ -1,7 +1,7 @@
 Find trip
 =====
 
-find_trip is a script written in Python which finds combinations of flights. It's the entry task for python weekend organized by Kiwi.
+find_trip is a script written in Python which finds combinations of flights. It's a solution for entry task for python weekend organized by Kiwi.
 
 Task
 ----
@@ -17,7 +17,7 @@ python find_trip.py input_data.csv
 
 Example output
 ------
-Example output for 10 flights per trip
+Example output for one trip containing 10 flights
 ```
 1;IT;FCO;BCN;2015-06-02T12:40;2015-06-02T14:35
 1;ES;BCN;DUB;2016-03-09T10:20;2016-03-09T12:10
