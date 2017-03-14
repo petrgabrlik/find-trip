@@ -14,8 +14,9 @@ import sys
 import csv
 import pandas as pd
 import time
+from argparse import ArgumentParser
 
-FLIGHTS_PER_TRIP = 10
+FLIGHTS_PER_TRIP = 3
 NUMBER_OF_TRIPS = 100
 DEBUG = False
 
@@ -144,10 +145,25 @@ def find(df, current_flight, countries_visited, trips, flights_of_trip_ind):
         flights_of_trip_ind.pop()
 
 
-def main(in_path):
+# def main(in_path):
+def main():
     '''
     The main function of the script.
     '''
+
+    # Argument parsing
+    parser = ArgumentParser()
+
+    parser.add_argument('ifile',
+        help='an input file containing flights')
+
+    parser.add_argument('-f', '--flights',
+        help='the number of flights per trip',
+        type=int, default=FLIGHTS_PER_TRIP)
+
+    args = parser.parse_args()
+    in_path = args.ifile
+
     # Create airport: country dict
     iata_country = create_airport_dict()
 
@@ -188,4 +204,5 @@ def main(in_path):
 
 
 if __name__ == '__main__':
-    main(sys.argv[1])
+    # main(sys.argv[1:])
+    main()
