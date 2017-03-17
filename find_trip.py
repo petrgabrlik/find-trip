@@ -10,7 +10,7 @@ https://gist.github.com/MichalCab/2176c0eb2d996d906eea38e9ec9835d2
 __author__ = "Petr Gabrlik"
 __email__ = "petrgabrlik@email.cz"
 
-import sys
+# import sys
 import csv
 import pandas as pd
 import time
@@ -19,6 +19,7 @@ from argparse import ArgumentParser
 FLIGHTS_PER_TRIP = 3
 NUMBER_OF_TRIPS = 100
 DEBUG = False
+
 
 def create_airport_dict():
     '''
@@ -36,7 +37,7 @@ def create_airport_dict():
     with open(path, encoding="utf-8") as fp:
         reader = csv.reader(fp, delimiter=',', quotechar='"',
                             skipinitialspace=True)
-        next(reader, None) # skip header
+        next(reader, None)  # skip header
         for line in reader:
             iata_country[line[13]] = line[8]
 
@@ -68,13 +69,14 @@ def print_trip(df, trips):
     '''
     trip = trips[-1]
     for flight_idx in trip:
-        print(  len(trips),
-                df.loc[flight_idx]['srccountry'],
-                df.loc[flight_idx]['src'],
-                df.loc[flight_idx]['dest'],
-                df.loc[flight_idx]['deptime'].strftime('%Y-%m-%dT%H:%M'),
-                df.loc[flight_idx]['arrtime'].strftime('%Y-%m-%dT%H:%M'),
-                sep=';')
+        print(
+            len(trips),
+            df.loc[flight_idx]['srccountry'],
+            df.loc[flight_idx]['src'],
+            df.loc[flight_idx]['dest'],
+            df.loc[flight_idx]['deptime'].strftime('%Y-%m-%dT%H:%M'),
+            df.loc[flight_idx]['arrtime'].strftime('%Y-%m-%dT%H:%M'),
+            sep=';')
 
 
 def find(df, current_flight, countries_visited, trips, flights_of_trip_ind):
@@ -95,11 +97,13 @@ def find(df, current_flight, countries_visited, trips, flights_of_trip_ind):
 
     # Find next flight
     if len(flights_of_trip_ind) < FLIGHTS_PER_TRIP-1:
-        potentional_dests = df[ (current_flight['dest'] == df['src']) &
-                                (current_flight['arrtime'] < df['deptime']) &
-                                (~df['destcountry'].isin(countries_visited)) &
-                                ( ( pd.to_datetime(df['arrtime']) - pd.to_datetime(df.loc[flights_of_trip_ind[0]]['deptime']) ) < pd.to_timedelta('365 days') )
-                                ]
+        potentional_dests = df[
+            (current_flight['dest'] == df['src']) &
+            (current_flight['arrtime'] < df['deptime']) &
+            (~df['destcountry'].isin(countries_visited)) &
+            ((pd.to_datetime(df['arrtime']) -
+              pd.to_datetime(df.loc[flights_of_trip_ind[0]]['deptime'])) < pd.to_timedelta('365 days'))
+            ]
         if len(potentional_dests) > 0:
             for index, flight in potentional_dests.iterrows():
                 # Call the recursive find function
@@ -116,11 +120,13 @@ def find(df, current_flight, countries_visited, trips, flights_of_trip_ind):
 
     # Find the last flight to the initial destination
     elif len(flights_of_trip_ind) == FLIGHTS_PER_TRIP-1:
-        potentional_dests = df[ (current_flight['dest'] == df['src']) &
-                                (current_flight['arrtime'] < df['deptime']) &
-                                (df['dest'] == df.loc[flights_of_trip_ind[0]]['src']) &
-                                ( ( pd.to_datetime(df['arrtime']) - pd.to_datetime(df.loc[flights_of_trip_ind[0]]['deptime']) ) < pd.to_timedelta('365 days') )
-                                ]
+        potentional_dests = df[
+            (current_flight['dest'] == df['src']) &
+            (current_flight['arrtime'] < df['deptime']) &
+            (df['dest'] == df.loc[flights_of_trip_ind[0]]['src']) &
+            ((pd.to_datetime(df['arrtime']) -
+              pd.to_datetime(df.loc[flights_of_trip_ind[0]]['deptime'])) < pd.to_timedelta('365 days'))
+        ]
         if len(potentional_dests) > 0:
             for index, flight in potentional_dests.iterrows():
                 # Call the recursive find function
@@ -154,10 +160,12 @@ def main():
     # Argument parsing
     parser = ArgumentParser()
 
-    parser.add_argument('ifile',
+    parser.add_argument(
+        'ifile',
         help='an input file containing flights')
 
-    parser.add_argument('-f', '--flights',
+    parser.add_argument(
+        '-f', '--flights',
         help='the number of flights per trip',
         type=int, default=FLIGHTS_PER_TRIP)
 
@@ -168,15 +176,14 @@ def main():
     iata_country = create_airport_dict()
 
     # Create input data dataframe
-    df = pd.read_csv(in_path, sep=';',
-                    names=['src', 'dest', 'deptime', 'arrtime'],
-                    skiprows=1, parse_dates=[2, 3])
+    df = pd.read_csv(
+        in_path, sep=';',
+        names=['src', 'dest', 'deptime', 'arrtime'],
+        skiprows=1, parse_dates=[2, 3])
 
     # Add source and destination country columns to the dataframe
-    df['srccountry'] = df.apply(lambda x:
-                                iata_country.get(x['src'], 'unknown'), axis=1)
-    df['destcountry'] = df.apply(lambda x:
-                                iata_country.get(x['dest'], 'unknown'), axis=1)
+    df['srccountry'] = df.apply(lambda x: iata_country.get(x['src'], 'unknown'), axis=1)
+    df['destcountry'] = df.apply(lambda x: iata_country.get(x['dest'], 'unknown'), axis=1)
 
     # Delete domestic flights
     df = df[df['srccountry'] != df['destcountry']]
