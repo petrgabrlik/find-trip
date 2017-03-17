@@ -21,6 +21,12 @@ NUMBER_OF_TRIPS = 100
 DEBUG = False
 
 
+class Trip(object):
+    """docstring for ."""
+    def __init__(self):
+        pass
+
+
 def create_airport_dict():
     '''
     Create dictionary of airports and their countries.
